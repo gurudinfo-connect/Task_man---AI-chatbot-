@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block title %}Chat — Task_Man{% endblock %}
+{% block content %}
+<div class="app-shell">
+  {% set active = 'chat' %}
+  {% include "_sidebar.html" %}
+
+  <main class="main-area">
+    <div class="topbar">
+      <div>
+        <button class="btn-icon menu-toggle" onclick="toggleSidebar()" style="margin-right:10px;">☰</button>
+        <h2 style="display:inline">{{ active_chat.title if active_chat else "Task_Man" }}</h2>
+        <div class="sub">{{ "Conversation" if active_chat else "Your intelligent AI task assistant" }}</div>
+      </div>
+      <div class="topbar-actions">
+        {% if active_chat %}
+        <button class="btn btn-ghost" onclick="exportChat({{ active_chat.id }})">⬇ Export</button>
+        {% endif %}
+        <button class="btn-icon" title="Settings" onclick="window.location='{{ url_for('settings') }}'">⚙️</button>
+      </div>
+    </div>
+
+    <div class="chat-area">
+      <div class="chat-scroll" id="chatScroll">
+        {% if not active_chat or not active_chat.messages %}
+        <div class="welcome-block" id="welcomeBlock">
+          <div class="ic">🤖</div>
+          <h2>Hello! I'm Task_Man 👋</h2>
+          <p>How can I help you today?</p>
+          <div class="suggestion-chips">
+            <button class="chip" onclick="sendSuggestion('Add task: Prepare weekly report')">📝 Add a task</button>
+            <button class="chip" onclick="sendSuggestion('List my tasks')">📋 List my tasks</button>
+            <button class="chip" onclick="sendSuggestion('Remind me to drink water every hour')">⏰ Set a reminder</button>
+            <button class="chip" onclick="sendSuggestion('What can you help me with?')">✨ What can you do?</button>
+          </div>
+        </div>
+        {% else %}
+          {% for m in active_chat.messages %}
+          <div class="msg-row {{ 'user' if m.role == 'user' else 'ai' }}">
+            <div class="avatar {{ 'ai' if m.role=='ai' else '' }}">{{ '🤖' if m.role=='ai' else current_user.avatar_seed }}</div>
+            <div>
+              <div class="msg-bubble">{{ m.content }}</div>
+              <div class="msg-meta">
+                <span>{{ m.created_at.strftime('%I:%M %p') }}</span>
+                {% if m.role == 'ai' %}
+                <span class="msg-actions">
+                  <button onclick="copyText(this)" data-text="{{ m.content|e }}" title="Copy">📋</button>
+                </span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <div class="chat-input-wrap">
+        <div class="chat-input-bar glass">
+          <button class="btn-icon" title="Attach file">📎</button>
+          <textarea id="chatInput" rows="1" placeholder="Ask Task_Man anything..." onkeydown="handleInputKey(event)"></textarea>
+          <button class="btn-icon" id="micBtn" title="Voice input" onclick="toggleVoice()">🎙️</button>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+        </div>
+        <div class="chat-hint">Task_Man can make mistakes. Verify important task details.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const CHAT_ID = {{ active_chat.id if active_chat else 'null' }};
+const CSRF_OK = true;
+
+function scrollToBottom() {
+  const el = document.getElementById("chatScroll");
+  el.scrollTop = el.scrollHeight;
+}
+scrollToBottom();
+
+function handleInputKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function sendSuggestion(text) {
+  document.getElementById("chatInput").value = text;
+  sendMessage();
+}
+
+function appendMessage(role, content, time) {
+  const welcome = document.getElementById("welcomeBlock");
+  if (welcome) welcome.remove();
+  const scroll = document.getElementById("chatScroll");
+
+  const row = document.createElement("div");
+  row.className = "msg-row " + (role === "user" ? "user" : "ai");
+
+  const avatar = document.createElement("div");
+  avatar.className = "avatar" + (role === "ai" ? " ai" : "");
+  avatar.textContent = role === "ai" ? "🤖" : "{{ current_user.avatar_seed }}";
+
+  const wrap = document.createElement("div");
+  const bubble = document.createElement("div");
+  bubble.className = "msg-bubble";
+  try {
+    bubble.innerHTML = renderMarkdown(content);
+  } catch (e) {
+    bubble.textContent = content;
+  }
+  if (!bubble.innerHTML.trim()) {
+    bubble.textContent = content;
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "msg-meta";
+  const timeSpan = document.createElement("span");
+  timeSpan.textContent = time;
+  meta.appendChild(timeSpan);
+  if (role === "ai") {
+    const actions = document.createElement("span");
+    actions.className = "msg-actions";
+    const copyBtn = document.createElement("button");
+    copyBtn.title = "Copy";
+    copyBtn.textContent = "📋";
+    copyBtn.addEventListener("click", () => copyText(copyBtn, content));
+    actions.appendChild(copyBtn);
+    meta.appendChild(actions);
+  }
+
+  wrap.appendChild(bubble);
+  wrap.appendChild(meta);
+  row.appendChild(avatar);
+  row.appendChild(wrap);
+  scroll.appendChild(row);
+  scrollToBottom();
+}
+
+function showTyping() {
+  const scroll = document.getElementById("chatScroll");
+  const row = document.createElement("div");
+  row.className = "msg-row ai";
+  row.id = "typingRow";
+  row.innerHTML = `<div class="avatar ai">🤖</div><div class="msg-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+  scroll.appendChild(row);
+  scrollToBottom();
+}
+function hideTyping() {
+  const row = document.getElementById("typingRow");
+  if (!row) return;
+  row.style.transition = "opacity .2s ease";
+  row.style.opacity = "0";
+  setTimeout(() => row.remove(), 180);
+}
+
+async function ensureChat() {
+  if (window.CURRENT_CHAT_ID) return window.CURRENT_CHAT_ID;
+  if (CHAT_ID) { window.CURRENT_CHAT_ID = CHAT_ID; return CHAT_ID; }
+  const res = await fetch("/api/chat/new", { method: "POST" });
+  const data = await res.json();
+  window.CURRENT_CHAT_ID = data.chat_id;
+  history.replaceState(null, "", "/chat/" + data.chat_id);
+  return data.chat_id;
+}
+
+async function sendMessage() {
+  const input = document.getElementById("chatInput");
+  const text = input.value.trim();
+  if (!text) return;
+  const sendBtn = document.getElementById("sendBtn");
+  sendBtn.disabled = true;
+  sendBtn.classList.add("sending");
+  setTimeout(() => sendBtn.classList.remove("sending"), 500);
+
+  const now = new Date();
+  const time = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  appendMessage("user", text, time);
+  input.value = "";
+  input.style.height = "auto";
+  showTyping();
+
+  try {
+    const chatId = await ensureChat();
+    const res = await fetch(`/api/chat/${chatId}/message`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text }),
+    });
+    if (!res.ok) {
+      hideTyping();
+      appendMessage("ai", `Server error (${res.status}). Please check the terminal log.`, time);
+      sendBtn.disabled = false;
+      return;
+    }
+    const data = await res.json();
+    hideTyping();
+    if (data.error) {
+      appendMessage("ai", "Sorry, something went wrong. Please try again.", time);
+    } else {
+      appendMessage("ai", data.ai_message.content, data.ai_message.timestamp);
+    }
+  } catch (err) {
+    hideTyping();
+    appendMessage("ai", "Connection error — please try again. (" + err.message + ")", time);
+  }
+  sendBtn.disabled = false;
+}
+
+async function createNewChat() {
+  const res = await fetch("/api/chat/new", { method: "POST" });
+  const data = await res.json();
+  window.location = "/chat/" + data.chat_id;
+}
+
+async function deleteChat(id) {
+  if (!confirm("Delete this conversation?")) return;
+  await fetch(`/api/chat/${id}/delete`, { method: "POST" });
+  window.location = "/chat";
+}
+
+function exportChat(id) {
+  window.location = `/api/chat/${id}/export`;
+}
+
+function copyText(btn, text) {
+  const content = text !== undefined ? text : btn.getAttribute("data-text");
+  navigator.clipboard.writeText(content);
+  btn.textContent = "✅";
+  setTimeout(() => { btn.textContent = "📋"; }, 1500);
+}
+
+let recognizing = false;
+function toggleVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("Voice input isn't supported in this browser.");
+    return;
+  }
+  const micBtn = document.getElementById("micBtn");
+  if (recognizing) return;
+  const recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.onstart = () => { recognizing = true; micBtn.style.color = "#F87171"; };
+  recognition.onend = () => { recognizing = false; micBtn.style.color = ""; };
+  recognition.onresult = (e) => {
+    document.getElementById("chatInput").value = e.results[0][0].transcript;
+  };
+  recognition.start();
+}
+
+document.getElementById("chatInput").addEventListener("input", function () {
+  this.style.height = "auto";
+  this.style.height = Math.min(this.scrollHeight, 140) + "px";
+});
+
+document.getElementById("chatSearchInput")?.addEventListener("input", function () {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll(".chat-item").forEach((item) => {
+    item.style.display = item.dataset.title.includes(q) ? "" : "none";
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Task Manager — Task_Man{% endblock %}
+{% block content %}
+<div class="app-shell">
+  {% set active = 'tasks' %}
+  {% include "_sidebar.html" %}
+
+  <main class="main-area">
+    <div class="topbar">
+      <div>
+        <button class="btn-icon menu-toggle" onclick="toggleSidebar()" style="margin-right:10px;">☰</button>
+        <h2 style="display:inline">Task Manager</h2>
+        <div class="sub">Create, track, and complete your tasks.</div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openTaskModal()">+ New Task</button>
+      </div>
+    </div>
+
+    <div class="tasks-body">
+      <div class="task-toolbar">
+        <div class="filter-tabs">
+          <a href="{{ url_for('tasks_view', status='all') }}" class="{{ 'active' if status_filter=='all' }}">All</a>
+          <a href="{{ url_for('tasks_view', status='pending') }}" class="{{ 'active' if status_filter=='pending' }}">Pending</a>
+          <a href="{{ url_for('tasks_view', status='completed') }}" class="{{ 'active' if status_filter=='completed' }}">Completed</a>
+        </div>
+      </div>
+
+      <div id="taskListContainer">
+        {% if tasks %}
+          {% for t in tasks %}
+          <div class="task-card glass {{ 'completed' if t.status=='completed' }}" data-id="{{ t.id }}">
+            <button class="task-check {{ 'checked' if t.status=='completed' }}" onclick="toggleTask({{ t.id }}, this)">
+              {{ '✓' if t.status=='completed' }}
+            </button>
+            <div class="body">
+              <div class="title">{{ t.title }}</div>
+              {% if t.description %}<div class="desc">{{ t.description }}</div>{% endif %}
+              <div class="meta-row">
+                <span class="badge {{ t.priority }}">{{ t.priority }}</span>
+                <span class="badge {{ t.status }}">{{ t.status }}</span>
+                {% if t.due_date %}<span class="due">📅 {{ t.due_date.strftime('%b %d, %I:%M %p') }}</span>{% endif %}
+              </div>
+            </div>
+            <button class="del" onclick="deleteTask({{ t.id }}, this)">🗑️</button>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">
+            <div class="ic">🗒️</div>
+            <p>No tasks here yet. Create one or ask Task_Man in chat.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+</div>
+
+<button class="fab" onclick="openTaskModal()">+</button>
+
+<div class="modal-overlay" id="taskModal">
+  <div class="modal-box glass">
+    <h3>Create a new task</h3>
+    <div class="field">
+      <label>Title</label>
+      <input type="text" id="taskTitle" placeholder="e.g. Finish Q3 report">
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <textarea id="taskDesc" rows="3" placeholder="Optional details..."></textarea>
+    </div>
+    <div class="field">
+      <label>Priority</label>
+      <select id="taskPriority">
+        <option value="low">Low</option>
+        <option value="medium" selected>Medium</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Due date</label>
+      <input type="datetime-local" id="taskDue">
+    </div>
+    <div class="actions">
+      <button class="btn btn-ghost" onclick="closeTaskModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitTask()">Create Task</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openTaskModal() { document.getElementById("taskModal").classList.add("show"); }
+function closeTaskModal() {
+  document.getElementById("taskModal").classList.remove("show");
+  document.getElementById("taskTitle").value = "";
+  document.getElementById("taskDesc").value = "";
+  document.getElementById("taskDue").value = "";
+}
+
+async function submitTask() {
+  const title = document.getElementById("taskTitle").value.trim();
+  if (!title) { alert("Please enter a task title."); return; }
+  const payload = {
+    title,
+    description: document.getElementById("taskDesc").value.trim(),
+    priority: document.getElementById("taskPriority").value,
+    due_date: document.getElementById("taskDue").value || null,
+  };
+  const res = await fetch("/api/tasks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (res.ok) {
+    closeTaskModal();
+    window.location.reload();
+  }
+}
+
+async function toggleTask(id, btn) {
+  const res = await fetch(`/api/tasks/${id}/toggle`, { method: "POST" });
+  if (res.ok) window.location.reload();
+}
+
+async function deleteTask(id, btn) {
+  if (!confirm("Delete this task?")) return;
+  const res = await fetch(`/api/tasks/${id}/delete`, { method: "POST" });
+  if (res.ok) btn.closest(".task-card").remove();
+}
+</script>
+{% endblock %}

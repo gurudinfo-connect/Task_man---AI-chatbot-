@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Task_Man — Your Intelligent AI Task Assistant{% endblock %}
+{% block content %}
+
+<nav class="landing-nav">
+  <div class="brand">🤖 Task_Man <span class="dot">•</span></div>
+  <div class="landing-nav-links">
+    <a href="#features">Features</a>
+    <a href="#dashboard">Dashboard</a>
+    <a href="{{ url_for('login') }}">Log in</a>
+    <a href="{{ url_for('register') }}" class="btn btn-primary">Get Started</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">✨ Now with smarter task understanding</div>
+  <h1>Your tasks, <span class="text-gradient">handled by AI.</span></h1>
+  <p class="lead">
+    Task_Man turns plain conversation into organized action — create tasks, set reminders,
+    and track your day, all from one intelligent chat assistant.
+  </p>
+  <div class="hero-cta">
+    <a href="{{ url_for('register') }}" class="btn btn-primary">Start for free →</a>
+    <a href="{{ url_for('login') }}" class="btn btn-ghost">I already have an account</a>
+  </div>
+
+  <div class="hero-mock glass">
+    <div class="hero-mock-bar"><span></span><span></span><span></span></div>
+    <div class="hero-mock-msg-ai">Hello! I'm Task_Man 👋 How can I help you today?</div>
+    <div class="hero-mock-msg-user">Add task: Finish the Q3 report by Friday</div>
+    <div class="hero-mock-msg-ai">✅ Task created: <strong>Finish the Q3 report</strong> — due Friday. Want a reminder too?</div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="section-eyebrow">Capabilities</div>
+  <h2 class="section-title">Everything a productive day needs</h2>
+  <div class="feature-grid">
+    <div class="feature-card glass">
+      <div class="feature-icon">💬</div>
+      <h3>Conversational AI</h3>
+      <p>Chat naturally and let Task_Man understand intent, context, and follow-ups across your whole conversation.</p>
+    </div>
+    <div class="feature-card glass">
+      <div class="feature-icon">✅</div>
+      <h3>Task Creation</h3>
+      <p>Turn a sentence into a tracked task instantly — set priority, due dates, and status without leaving the chat.</p>
+    </div>
+    <div class="feature-card glass">
+      <div class="feature-icon">⏰</div>
+      <h3>Smart Reminders</h3>
+      <p>Never miss a deadline. Task_Man keeps tabs on what's due and nudges you when it matters.</p>
+    </div>
+    <div class="feature-card glass">
+      <div class="feature-icon">📊</div>
+      <h3>Productivity Dashboard</h3>
+      <p>See completed vs pending tasks, your weekly trend, and today's schedule at a glance.</p>
+    </div>
+    <div class="feature-card glass">
+      <div class="feature-icon">🌓</div>
+      <h3>Built for Focus</h3>
+      <p>A calm, dark glassmorphism interface designed to reduce visual noise and keep you in flow.</p>
+    </div>
+    <div class="feature-card glass">
+      <div class="feature-icon">🔒</div>
+      <h3>Private & Secure</h3>
+      <p>Your conversations and tasks are tied to your account only, backed by session-based authentication.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta-banner glass" id="dashboard">
+  <h2>Ready to let Task_Man run your to-do list?</h2>
+  <p>Create a free account in seconds — no credit card, no setup.</p>
+  <a href="{{ url_for('register') }}" class="btn btn-primary">Create your account</a>
+</section>
+
+<footer class="landing-footer">
+  © 2026 Task_Man. Built to help you get things done.
+</footer>
+
+{% endblock %}

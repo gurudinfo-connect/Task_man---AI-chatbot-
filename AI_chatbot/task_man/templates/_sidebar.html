@@ -1,0 +1,39 @@
+<aside class="sidebar">
+  <div class="brand">🤖 Task_Man</div>
+
+  <nav class="sidebar-nav">
+    <a href="{{ url_for('dashboard') }}" class="{{ 'active' if active=='dashboard' else '' }}"><span class="ic">📊</span> Dashboard</a>
+    <a href="{{ url_for('chat_view') }}" class="{{ 'active' if active=='chat' else '' }}"><span class="ic">💬</span> Chat</a>
+    <a href="{{ url_for('tasks_view') }}" class="{{ 'active' if active=='tasks' else '' }}"><span class="ic">✅</span> Task Manager</a>
+    <a href="{{ url_for('profile') }}" class="{{ 'active' if active=='profile' else '' }}"><span class="ic">👤</span> Profile</a>
+    <a href="{{ url_for('settings') }}" class="{{ 'active' if active=='settings' else '' }}"><span class="ic">⚙️</span> Settings</a>
+  </nav>
+
+  {% if active == 'chat' %}
+  <div class="sidebar-search">
+    <span>🔍</span>
+    <input type="text" id="chatSearchInput" placeholder="Search chats...">
+  </div>
+  <button class="btn btn-primary sidebar-newchat" onclick="createNewChat()">+ New Chat</button>
+  <div class="sidebar-section-label">Recent Conversations</div>
+  <div class="chat-list" id="chatList">
+    {% for c in chats %}
+    <a href="{{ url_for('chat_view', chat_id=c.id) }}" class="chat-item {{ 'active' if active_chat and active_chat.id==c.id else '' }}" data-title="{{ c.title|lower }}">
+      <span class="label">{{ c.title }}</span>
+      <button class="del-btn" onclick="event.preventDefault(); event.stopPropagation(); deleteChat({{ c.id }})">✕</button>
+    </a>
+    {% else %}
+    <div class="empty-note">No conversations yet</div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="sidebar-footer">
+    <div class="avatar">{{ current_user.avatar_seed }}</div>
+    <div class="info">
+      <div class="name">{{ current_user.name }}</div>
+      <div class="role">{{ current_user.email }}</div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="btn-icon" title="Log out">⏻</a>
+  </div>
+</aside>

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Settings — Task_Man{% endblock %}
+{% block content %}
+<div class="app-shell">
+  {% set active = 'settings' %}
+  {% include "_sidebar.html" %}
+
+  <main class="main-area">
+    <div class="topbar">
+      <div>
+        <button class="btn-icon menu-toggle" onclick="toggleSidebar()" style="margin-right:10px;">☰</button>
+        <h2 style="display:inline">Settings</h2>
+        <div class="sub">Personalize how Task_Man works for you.</div>
+      </div>
+    </div>
+
+    <div class="simple-body">
+      <div class="panel glass" style="margin-bottom:18px;">
+        <h3>Appearance</h3>
+        <div class="settings-row">
+          <div>
+            <div class="label">Dark mode</div>
+            <div class="desc">Task_Man is designed dark-first for focus and reduced eye strain.</div>
+          </div>
+          <label class="switch"><input type="checkbox" checked id="darkToggle"><span class="track"></span></label>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="label">Reduce motion</div>
+            <div class="desc">Minimize animations across the interface.</div>
+          </div>
+          <label class="switch"><input type="checkbox" id="motionToggle"><span class="track"></span></label>
+        </div>
+      </div>
+
+      <div class="panel glass" style="margin-bottom:18px;">
+        <h3>Notifications</h3>
+        <div class="settings-row">
+          <div>
+            <div class="label">Task reminders</div>
+            <div class="desc">Get notified before a task's due date.</div>
+          </div>
+          <label class="switch"><input type="checkbox" checked><span class="track"></span></label>
+        </div>
+        <div class="settings-row">
+          <div>
+            <div class="label">Daily summary</div>
+            <div class="desc">Receive a recap of completed and pending tasks each evening.</div>
+          </div>
+          <label class="switch"><input type="checkbox"><span class="track"></span></label>
+        </div>
+      </div>
+
+      <div class="panel glass">
+        <h3>Data</h3>
+        <div class="settings-row">
+          <div>
+            <div class="label">Export all chats</div>
+            <div class="desc">Download a text export of your most recent conversation.</div>
+          </div>
+          <a href="{{ url_for('chat_view') }}" class="btn btn-ghost">Go to Chat</a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+document.getElementById("darkToggle")?.addEventListener("change", function () {
+  // Task_Man is dark-first by design; this is a placeholder toggle for a future light theme.
+  if (!this.checked) alert("Light mode is coming soon — Task_Man currently runs in dark mode only.");
+  this.checked = true;
+});
+</script>
+{% endblock %}

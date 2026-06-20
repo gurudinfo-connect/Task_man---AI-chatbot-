@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Profile — Task_Man{% endblock %}
+{% block content %}
+<div class="app-shell">
+  {% set active = 'profile' %}
+  {% include "_sidebar.html" %}
+
+  <main class="main-area">
+    <div class="topbar">
+      <div>
+        <button class="btn-icon menu-toggle" onclick="toggleSidebar()" style="margin-right:10px;">☰</button>
+        <h2 style="display:inline">Profile</h2>
+        <div class="sub">Manage your personal information.</div>
+      </div>
+    </div>
+
+    <div class="simple-body">
+      <div class="profile-header">
+        <div class="avatar">{{ current_user.avatar_seed }}</div>
+        <div>
+          <h2>{{ current_user.name }}</h2>
+          <p>{{ current_user.email }} • Joined {{ current_user.created_at.strftime('%B %Y') }}</p>
+        </div>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <div class="panel glass">
+        <h3>Edit Profile</h3>
+        <form method="POST" action="{{ url_for('profile_update') }}">
+          <div class="field">
+            <label>Full name</label>
+            <input type="text" name="name" value="{{ current_user.name }}">
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" value="{{ current_user.email }}" disabled>
+          </div>
+          <div class="field">
+            <label>New password (leave blank to keep current)</label>
+            <input type="password" name="password" placeholder="••••••••">
+          </div>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

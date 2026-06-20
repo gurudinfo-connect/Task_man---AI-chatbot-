@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Task_Man{% endblock %}
+{% block content %}
+<div class="app-shell">
+  {% set active = 'dashboard' %}
+  {% include "_sidebar.html" %}
+
+  <main class="main-area">
+    <div class="topbar">
+      <div>
+        <button class="btn-icon menu-toggle" onclick="toggleSidebar()" style="margin-right:10px;">☰</button>
+        <h2 style="display:inline">Dashboard</h2>
+        <div class="sub">Welcome back, {{ current_user.name.split(' ')[0] }} — here's your day at a glance.</div>
+      </div>
+      <div class="topbar-actions">
+        <a href="{{ url_for('chat_view') }}" class="btn btn-primary">+ New Chat</a>
+      </div>
+    </div>
+
+    <div class="dash-body">
+      <div class="stat-grid">
+        <div class="stat-card glass">
+          <div class="top"><div class="icon purple">📋</div></div>
+          <div class="value">{{ total }}</div>
+          <div class="label">Total Tasks</div>
+        </div>
+        <div class="stat-card glass">
+          <div class="top"><div class="icon green">✅</div></div>
+          <div class="value">{{ completed }}</div>
+          <div class="label">Completed Tasks</div>
+        </div>
+        <div class="stat-card glass">
+          <div class="top"><div class="icon amber">⏳</div></div>
+          <div class="value">{{ pending }}</div>
+          <div class="label">Pending Tasks</div>
+        </div>
+        <div class="stat-card glass">
+          <div class="top"><div class="icon cyan">📈</div></div>
+          <div class="value">{{ ((completed / total * 100) | round | int) if total else 0 }}%</div>
+          <div class="label">Productivity Rate</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="panel glass">
+          <h3>Productivity — Last 7 Days</h3>
+          <div class="chart-bars">
+            {% set max_count = (week_data | map(attribute='count') | max) or 1 %}
+            {% for d in week_data %}
+            <div class="chart-col">
+              <div class="chart-bar-fill" style="height: {{ (d.count / max_count * 100) if max_count else 4 }}%; min-height:4px;"></div>
+              <div class="lbl">{{ d.label }}</div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="panel glass">
+          <h3>Today's Schedule</h3>
+          {% if todays_tasks %}
+            {% for t in todays_tasks %}
+            <div class="schedule-item">
+              <div class="schedule-dot"></div>
+              <div class="t">{{ t.title }}</div>
+              <div class="when">{{ t.due_date.strftime('%I:%M %p') }}</div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-note">Nothing scheduled for today. Ask Task_Man to add something!</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="panel glass" style="margin-top:20px;">
+        <h3>Recent Tasks</h3>
+        {% if recent_tasks %}
+          {% for t in recent_tasks %}
+          <div class="recent-task-row">
+            <span class="badge {{ t.status }}">{{ t.status }}</span>
+            <span style="flex:1;">{{ t.title }}</span>
+            <span class="badge {{ t.priority }}">{{ t.priority }}</span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-note">No tasks yet — head to the Task Manager or just ask Task_Man in chat.</div>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}

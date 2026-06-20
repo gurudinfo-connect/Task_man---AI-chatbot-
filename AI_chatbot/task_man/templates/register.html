@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Sign up — Task_Man{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card glass">
+    <div class="brand">🤖 Task_Man</div>
+    <h1>Create your account</h1>
+    <p class="sub">Start letting AI organize your day.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+      <div class="field">
+        <label>Full name</label>
+        <input type="text" name="name" placeholder="Jane Doe" required>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="you@example.com" required>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="••••••••" required minlength="6">
+      </div>
+      <button type="submit" class="btn btn-primary">Create account</button>
+    </form>
+
+    <div class="auth-switch">Already have an account? <a href="{{ url_for('login') }}">Log in</a></div>
+  </div>
+</div>
+{% endblock %}
